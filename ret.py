@@ -108,7 +108,7 @@ class ReT(nn.Module):
     def __init__(
         self,
         in_channels=128,
-        num_classes=5,
+        num_classes=4,
         dim=256,
         kernels=3,
         strides=2,

@@ -30,7 +30,7 @@ def train(model, train_iter, valid_iter, lr, num_epochs, device="cuda"):
 
     model.apply(init_weights)
     model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.00001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
     loss = nn.CrossEntropyLoss()
     start_time = time.time()
 
@@ -90,12 +90,13 @@ class Model(nn.Module):
         self.conv = conv
         self.trans = trans
         self.act = F.gelu
-        self.fc = nn.Linear(10, 5)
+        self.fc = nn.Linear(8, 4)
 
     def forward(self, signal, ecg_feature, eog_feature):
         cls0 = self.conv(signal)
         cls1 = self.trans(ecg_feature, eog_feature)
         cls = torch.cat((cls0, cls1), dim=1)
+        cls = self.act(cls)
         output = self.fc(cls)
         return output
 
@@ -103,7 +104,7 @@ class Model(nn.Module):
 if __name__ == "__main__":
     fix_seed()
 
-    labels = np.load("./signal/labels.npy")
+    labels = np.load("./signal/labels-4.npy")
     # ecg = np.load("./data/ecg.npy")
     # eog = np.load("./data/eog.npy")
     # data = np.stack((ecg, eog), axis=1)
@@ -119,50 +120,50 @@ if __name__ == "__main__":
     del ecg_feature, eog_feature
 
     stratified_sampler = StratifiedSampler(labels)
-    for i in range(5):
-        train_set, val_set = stratified_sampler.get_split(data, i)
 
-        train_iter = DataLoader(
-            train_set,
-            batch_size=32,
-            shuffle=True,
-        )
-        valid_iter = DataLoader(
-            val_set,
-            batch_size=32,
-        )
+    train_set, val_set = stratified_sampler.get_split(data, 0.8)
+    del data
+    train_iter = DataLoader(
+        train_set,
+        batch_size=16,
+        shuffle=True,
+    )
+    valid_iter = DataLoader(
+        val_set,
+        batch_size=32,
+    )
 
-        del train_set, val_set
-        conv = Convolution(
-            dims=[16, 32],
-            num_blocks=[1, 1],
-            downsample_ratio=[5, 2],
-            ffn_ratio=1,
-            larges_kernel=[15, 15],
-            small_kernel=[5, 5],
-            block_dropout=0.1,
-            class_dropout=0.5,
-            patch_size=15,
-            patch_stride=15,
-        )
-        # trans = Transformer(
-        #     dim=32,
-        #     kernels=[(1, 5), (2, 5)],
-        #     strides=[(1, 5), (2, 5)],
-        #     heads=[8, 16],
-        #     depth=[1, 2],
-        #     dropout=0.7,
-        # )
-        trans = ReT(
-            in_channels=128,
-            num_classes=5,
-            dim=256,
-            kernels=3,
-            strides=2,
-            heads=16,
-            depth=1,
-            dropout=0.3,
-        )
-        model = Model(conv, trans)
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        train(model, train_iter, valid_iter, lr=0.0005, num_epochs=50, device=device)
+    del train_set, val_set
+    conv = Convolution(
+        dims=[8, 16],
+        num_blocks=[1, 1],
+        downsample_ratio=[5, 2],
+        ffn_ratio=1,
+        larges_kernel=[15, 15],
+        small_kernel=[5, 5],
+        block_dropout=0.5,
+        class_dropout=0.5,
+        patch_size=15,
+        patch_stride=15,
+    )
+    # trans = Transformer(
+    #     dim=32,
+    #     kernels=[(1, 5), (2, 5)],
+    #     strides=[(1, 5), (2, 5)],
+    #     heads=[8, 16],
+    #     depth=[1, 2],
+    #     dropout=0.7,
+    # )
+    trans = ReT(
+        in_channels=128,
+        num_classes=4,
+        dim=256,
+        kernels=3,
+        strides=2,
+        heads=16,
+        depth=1,
+        dropout=0.5,
+    )
+    model = Model(conv, trans)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    train(model, train_iter, valid_iter, lr=0.0009, num_epochs=100, device=device)

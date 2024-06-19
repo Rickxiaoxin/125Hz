@@ -263,7 +263,7 @@ class Convolution(nn.Module):
         self.class_dropout0 = nn.Dropout(class_dropout)
         self.dense0 = nn.Linear(
             2 * dims[-1] * 3750 // patch_stride // downsample_ratio[0],
-            5,
+            4,
         )
         # self.class_dropout1 = nn.Dropout(class_dropout)
         # self.dense1 = nn.Linear(5072, 5)

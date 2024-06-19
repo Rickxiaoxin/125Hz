@@ -2,3 +2,4 @@ photo/
 signal/
 data/
 __pycache__/
+checkpoint.pth
