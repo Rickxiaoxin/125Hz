@@ -30,7 +30,7 @@ def train(model, train_iter, valid_iter, lr, num_epochs, device="cuda"):
 
     model.apply(init_weights)
     model.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.003)
     loss = nn.CrossEntropyLoss()
     start_time = time.time()
 
@@ -99,6 +99,7 @@ class Model(nn.Module):
         cls = self.act(cls)
         output = self.fc(cls)
         return output
+        # return cls0
 
 
 if __name__ == "__main__":
@@ -137,14 +138,14 @@ if __name__ == "__main__":
     conv = Convolution(
         dims=[8, 16],
         num_blocks=[1, 1],
-        downsample_ratio=[5, 2],
-        ffn_ratio=1,
-        larges_kernel=[15, 15],
+        downsample_ratio=[5, 5],
+        ffn_ratio=2,
+        larges_kernel=[9, 9],
         small_kernel=[5, 5],
         block_dropout=0.5,
         class_dropout=0.5,
-        patch_size=15,
-        patch_stride=15,
+        patch_size=8,
+        patch_stride=8,
     )
     # trans = Transformer(
     #     dim=32,
@@ -157,7 +158,7 @@ if __name__ == "__main__":
     trans = ReT(
         in_channels=128,
         num_classes=4,
-        dim=256,
+        dim=128,
         kernels=3,
         strides=2,
         heads=16,
@@ -166,4 +167,4 @@ if __name__ == "__main__":
     )
     model = Model(conv, trans)
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    train(model, train_iter, valid_iter, lr=0.0009, num_epochs=100, device=device)
+    train(model, train_iter, valid_iter, lr=0.0005, num_epochs=100, device=device)

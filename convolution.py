@@ -262,7 +262,8 @@ class Convolution(nn.Module):
         self.act_class = F.gelu
         self.class_dropout0 = nn.Dropout(class_dropout)
         self.dense0 = nn.Linear(
-            2 * dims[-1] * 3750 // patch_stride // downsample_ratio[0],
+            # 2 * dims[-1] * 3750 // patch_stride // downsample_ratio[0],
+            3008,
             4,
         )
         # self.class_dropout1 = nn.Dropout(class_dropout)
@@ -284,7 +285,9 @@ class Convolution(nn.Module):
                     x = torch.cat([x, pad], dim=-1)
             else:
                 if N % self.downsample_ratio[i - 1] != 0:
-                    pad_len = self.downsample_ratio - (N % self.downsample_ratio)
+                    pad_len = self.downsample_ratio[i - 1] - (
+                        N % self.downsample_ratio[i - 1]
+                    )
                     x = torch.cat([x, x[:, :, -pad_len:]], dim=-1)
             x = self.downsample_layers[i](x)
             _, D_, N_ = x.shape
@@ -304,13 +307,13 @@ if __name__ == "__main__":
         dims=[16, 32],
         num_blocks=[1, 1],
         downsample_ratio=[5, 2],
-        ffn_ratio=1,
-        larges_kernel=[15, 15],
+        ffn_ratio=2,
+        larges_kernel=[9, 9],
         small_kernel=[5, 5],
-        block_dropout=0.1,
-        class_dropout=0.5,
-        patch_size=15,
-        patch_stride=15,
+        block_dropout=0,
+        class_dropout=0,
+        patch_size=8,
+        patch_stride=8,
     )
     data = torch.randn([1, 2, 3750])
     result = conv(data)
